@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>График смен</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e74c3c;
+    --red-bg: #c0392b;
+    --green: #2ecc71;
+    --green-bg: #1e8449;
+    --purple: #8e44ad;
+    --bg: #2c2c2c;
+    --surface: #383838;
+    --surface2: #424242;
+    --border: #555;
+    --text: #f0f0f0;
+    --muted: #aaa;
+    --header: #1a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    background: var(--header);
+    padding: 18px 18px 14px;
+    border-bottom: 2px solid #111;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: #fff; margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .controls label { font-size: 11px; color: #888; }
+  select, input[type=text], input[type=number] {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 5px 9px;
+    background: #2a2a2a;
+    color: #fff;
+    outline: none;
+  }
+  select:focus, input:focus { border-color: #777; }
+
+  .hol-section {
+    margin: 12px 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .hol-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .hol-chips { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
+  .hol-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--purple); color: #fff;
+    border-radius: 5px; padding: 3px 8px; font-size: 11px; font-weight: 500;
+  }
+  .hol-chip button { background: none; border: none; color: #ddd; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+  .hol-add { display: flex; gap: 6px; align-items: center; }
+  .btn-add {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid #666;
+    border-radius: 6px; padding: 5px 12px;
+    background: #4a4a4a; color: #fff;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn-add:hover { background: #555; }
+  .btn-add:active { transform: scale(0.97); }
+
+  .table-wrap {
+    margin: 12px 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #111;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th {
+    background: #111;
+    color: #999;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 9px; font-weight: 400;
+    letter-spacing: 0.5px;
+    padding: 10px 4px; text-align: center;
+    border-bottom: 2px solid #000;
+  }
+  td {
+    padding: 5px 3px; text-align: center;
+    border-bottom: 1px solid #333;
+    background: var(--surface);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.we td { background: #313131; }
+
+  .d-num { font-weight: 600; font-size: 13px; color: #ddd; }
+  .d-name { font-size: 11px; color: #777; }
+  tr.we .d-num { color: #666; }
+  tr.we .d-name { color: #555; }
+
+  .pill {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 5px 0;
+    width: 94%;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pill-s   { background: var(--red-bg);   color: #fff; }
+  .pill-m   { background: var(--green-bg); color: #fff; }
+  .pill-off { background: #333; color: #666; font-weight: 400; font-size: 11px; border: 1px solid #444; }
+  .pill-hol { background: var(--purple);   color: #fff; font-size: 11px; }
+  .pill-freed { background: #2e2e2e; color: #666; font-size: 11px; font-style: italic; border: 1px dashed #555; }
+
+  .clickable { cursor: pointer; transition: opacity .12s; }
+  .clickable:hover .pill { opacity: 0.78; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 12px 16px 0;
+  }
+  .s-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .s-card-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .s-card-val {
+    font-size: 28px;
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 16px 0; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
+  .ldot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .hint { font-size: 11px; color: #666; margin: 8px 16px 0; }
+
+  @media (max-width: 400px) {
+    .summary { grid-template-columns: 1fr 1fr; }
+    .s-card-val { font-size: 22px; }
+    header h1 { font-size: 13px; }
+    .pill { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📅 ГРАФИК СМЕН — 3 через 3</h1>
+  <div class="controls">
+    <label>Месяц</label>
+    <select id="month-sel"></select>
+    <label>Красный</label>
+    <input type="text" id="name-s" value="Сергей" style="width:88px">
+    <label>Зелёный</label>
+    <input type="text" id="name-m" value="Михаил" style="width:88px">
+  </div>
+</header>
+
+<div class="hol-section">
+  <span class="hol-label">🗓 Праздники:</span>
+  <div class="hol-chips" id="hol-chips"></div>
+  <div class="hol-add">
+    <input type="number" id="hol-day" min="1" max="31" placeholder="день" style="width:64px">
+    <button class="btn-add" id="add-hol-btn">+ Праздник</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="sched"></table>
+</div>
+
+<div class="summary" id="summary"></div>
+
+<div class="legend">
+  <div class="leg"><div class="ldot" style="background:var(--red-bg)"></div><span id="leg-s">Сергей</span></div>
+  <div class="leg"><div class="ldot" style="background:var(--green-bg)"></div><span id="leg-m">Михаил</span></div>
+  <div class="leg"><div class="ldot" style="background:var(--purple)"></div>Праздник</div>
+  <div class="leg"><div class="ldot" style="background:#333;border:1px solid #555"></div>Выходной</div>
+</div>
+<p class="hint">💡 Нажмите на рабочую смену — освободить день (цикл сдвинется). Ещё раз — вернуть.</p>
+
+<script>
+const RU_MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const RU_SD=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const ANCHOR=new Date(2026,3,1);
+
+const monthSel=document.getElementById('month-sel');
+const curMonth=new Date().getMonth();
+for(let m=0;m<12;m++){
+  const o=document.createElement('option');
+  o.value=m; o.text=RU_MONTHS[m]+' 2026';
+  if(m===curMonth) o.selected=true;
+  monthSel.appendChild(o);
+}
+
+const holidays=new Set(['2026-05-09']);
+const freed=new Set();
+
+function dk(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+
+function computeSchedule(year,month){
+  const dInMonth=new Date(year,month+1,0).getDate();
+  const startDate=new Date(year,month,1);
+  let pc=0;
+  if(startDate>=ANCHOR){
+    let d=new Date(ANCHOR);
+    while(d<startDate){
+      if(!holidays.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))&&
+         !freed.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))) pc++;
+      d.setDate(d.getDate()+1);
+    }
+  } else {
+    let d=new Date(startDate);
+    while(d<ANCHOR){
+      if(!holidays.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))&&
+         !freed.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))) pc--;
+      d.setDate(d.getDate()+1);
+    }
+  }
+  const result=[];
+  let cursor=pc;
+  for(let day=1;day<=dInMonth;day++){
+    const date=new Date(year,month,day);
+    const dow=date.getDay();
+    const key=dk(year,month,day);
+    const hol=holidays.has(key);
+    const fr=freed.has(key);
+    let worker=null;
+    if(!hol&&!fr){
+      worker=((((cursor%6)+6)%6)<3)?'S':'M';
+      cursor++;
+    }
+    result.push({day,isWE:dow===0||dow===6,hol,fr,worker,dow,key});
+  }
+  return result;
+}
+
+function renderChips(m){
+  const chips=document.getElementById('hol-chips');
+  chips.innerHTML='';
+  [...holidays].filter(k=>parseInt(k.split('-')[1])-1===m).sort().forEach(k=>{
+    const day=parseInt(k.split('-')[2]);
+    const c=document.createElement('span');
+    c.className='hol-chip';
+    c.innerHTML=`${day} ${RU_MONTHS[m].slice(0,3).toLowerCase()} <button>×</button>`;
+    c.querySelector('button').onclick=()=>{holidays.delete(k);build();};
+    chips.appendChild(c);
+  });
+}
+
+function build(){
+  const m=parseInt(monthSel.value);
+  const y=2026;
+  const ns=document.getElementById('name-s').value||'Сергей';
+  const nm=document.getElementById('name-m').value||'Михаил';
+  document.getElementById('leg-s').textContent=ns;
+  document.getElementById('leg-m').textContent=nm;
+  renderChips(m);
+
+  const schedule=computeSchedule(y,m);
+  const table=document.getElementById('sched');
+  table.innerHTML=`<tr>
+    <th style="width:28px">#</th>
+    <th style="width:32px">ДЕНЬ</th>
+    <th style="width:40px">ДАТА</th>
+    <th>${ns.toUpperCase()}</th>
+    <th>${nm.toUpperCase()}</th>
+  </tr>`;
+
+  let ws=0,wm=0;
+  schedule.forEach(({day,isWE,hol,fr,worker,dow,key})=>{
+    const dowIdx=(dow+6)%7;
+    const tr=document.createElement('tr');
+    if(isWE) tr.classList.add('we');
+
+    let s_td,m_td;
+    if(hol){
+      s_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
+      m_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
+    } else if(fr){
+      s_td=`<td class="clickable" data-key="${key}" data-action="unfree"><span class="pill pill-freed">Освобождён</span></td>`;
+      m_td=`<td class="clickable" data-key="${key}" data-action="unfree"><span class="pill pill-freed">Освобождён</span></td>`;
+    } else if(worker==='S'){
+      ws++;
+      s_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill pill-s">Работа</span></td>`;
+      m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+    } else {
+      wm++;
+      s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      m_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill pill-m">Работа</span></td>`;
+    }
+
+    tr.innerHTML=`
+      <td class="d-num">${day}</td>
+      <td class="d-name">${RU_SD[dowIdx]}</td>
+      <td class="d-num">${String(day).padStart(2,'0')}.${String(m+1).padStart(2,'0')}</td>
+      ${s_td}${m_td}`;
+    table.appendChild(tr);
+  });
+
+  table.querySelectorAll('.clickable').forEach(cell=>{
+    cell.addEventListener('click',()=>{
+      const k=cell.dataset.key,a=cell.dataset.action;
+      if(a==='free') freed.add(k);
+      else if(a==='unfree') freed.delete(k);
+      build();
+    });
+  });
+
+  document.getElementById('summary').innerHTML=`
+    <div class="s-card"><div class="s-card-label">${ns} — смен</div><div class="s-card-val" style="color:var(--red)">${ws}</div></div>
+    <div class="s-card"><div class="s-card-label">${nm} — смен</div><div class="s-card-val" style="color:var(--green)">${wm}</div></div>
+    <div class="s-card"><div class="s-card-label">Дней в месяце</div><div class="s-card-val" style="color:#aaa">${schedule.length}</div></div>
+  `;
+}
+
+document.getElementById('add-hol-btn').addEventListener('click',()=>{
+  const m=parseInt(monthSel.value);
+  const v=parseInt(document.getElementById('hol-day').value);
+  const dim=new Date(2026,m+1,0).getDate();
+  const inp=document.getElementById('hol-day');
+  if(!v||v<1||v>dim){inp.style.borderColor='#e74c3c';setTimeout(()=>inp.style.borderColor='',1200);return;}
+  holidays.add(dk(2026,m,v));
+  inp.value='';
+  build();
+});
+
+monthSel.addEventListener('change',build);
+document.getElementById('name-s').addEventListener('input',build);
+document.getElementById('name-m').addEventListener('input',build);
+build();
+</script>
+</body>
+</html>
