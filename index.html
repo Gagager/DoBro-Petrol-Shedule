@@ -12,6 +12,7 @@
     --green: #2ecc71;
     --green-bg: #1e8449;
     --purple: #8e44ad;
+    --orange: #d35400;
     --bg: #2c2c2c;
     --surface: #383838;
     --surface2: #424242;
@@ -28,7 +29,6 @@
     min-height: 100vh;
     padding-bottom: 40px;
   }
-
   header {
     background: var(--header);
     padding: 18px 18px 14px;
@@ -55,8 +55,38 @@
   }
   select:focus, input:focus { border-color: #777; }
 
+  .swap-bar {
+    margin: 10px 16px 0;
+    background: #1e3a2f;
+    border: 1px solid #2e6b4e;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    transition: all 0.2s;
+  }
+  .swap-bar.hidden { display: none; }
+  .swap-bar.active {
+    background: #3a2a1a;
+    border-color: #c0762e;
+  }
+  .swap-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #2ecc71; flex-shrink: 0;
+  }
+  .swap-bar.active .swap-status-dot { background: #e67e22; }
+  .swap-label { font-size: 12px; color: #aaa; flex: 1; }
+  .swap-label strong { color: #fff; }
+  .btn-cancel-swap {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid #666;
+    border-radius: 6px; padding: 4px 10px;
+    background: #4a3030; color: #e88; cursor: pointer;
+  }
+  .btn-cancel-swap:hover { background: #5a3030; }
+
   .hol-section {
-    margin: 12px 16px 0;
+    margin: 10px 16px 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -83,8 +113,24 @@
   .btn-add:hover { background: #555; }
   .btn-add:active { transform: scale(0.97); }
 
+  .mode-bar {
+    margin: 10px 16px 0;
+    display: flex; gap: 8px;
+  }
+  .btn-mode {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid #555;
+    border-radius: 8px; padding: 6px 14px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-mode.off { background: #333; color: #888; }
+  .btn-mode.off:hover { background: #3a3a3a; color: #bbb; }
+  .btn-mode.on-free { background: #1e3a2f; color: #2ecc71; border-color: #2e6b4e; }
+  .btn-mode.on-swap { background: #2a1e3a; color: #9b59b6; border-color: #6b3a8a; }
+
   .table-wrap {
-    margin: 12px 16px 0;
+    margin: 10px 16px 0;
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #111;
@@ -126,9 +172,13 @@
   .pill-off { background: #333; color: #666; font-weight: 400; font-size: 11px; border: 1px solid #444; }
   .pill-hol { background: var(--purple);   color: #fff; font-size: 11px; }
   .pill-freed { background: #2e2e2e; color: #666; font-size: 11px; font-style: italic; border: 1px dashed #555; }
+  .pill-swapped { background: #4a3000; color: #e67e22; font-size: 11px; border: 1px dashed #c0762e; }
 
   .clickable { cursor: pointer; transition: opacity .12s; }
   .clickable:hover .pill { opacity: 0.78; }
+  .swap-pending { outline: 2px solid #e67e22 !important; outline-offset: -2px; border-radius: 6px; }
+  .swap-target .pill { opacity: 0.75; }
+  .swap-target:hover .pill { opacity: 1; outline: 2px dashed #e67e22; outline-offset: -2px; border-radius: 6px; }
 
   .summary {
     display: grid;
@@ -177,6 +227,17 @@
   </div>
 </header>
 
+<div class="mode-bar">
+  <button class="btn-mode off" id="btn-free-mode">✂️ Освободить день</button>
+  <button class="btn-mode off" id="btn-swap-mode">🔄 Поменяться сменами</button>
+</div>
+
+<div class="swap-bar hidden" id="swap-bar">
+  <div class="swap-status-dot" id="swap-dot"></div>
+  <span class="swap-label" id="swap-label">Выберите смену для обмена</span>
+  <button class="btn-cancel-swap" id="cancel-swap-btn">Отмена</button>
+</div>
+
 <div class="hol-section">
   <span class="hol-label">🗓 Праздники:</span>
   <div class="hol-chips" id="hol-chips"></div>
@@ -197,8 +258,9 @@
   <div class="leg"><div class="ldot" style="background:var(--green-bg)"></div><span id="leg-m">Михаил</span></div>
   <div class="leg"><div class="ldot" style="background:var(--purple)"></div>Праздник</div>
   <div class="leg"><div class="ldot" style="background:#333;border:1px solid #555"></div>Выходной</div>
+  <div class="leg"><div class="ldot" style="background:#4a3000;border:1px dashed #c0762e"></div>Обменяно</div>
 </div>
-<p class="hint">💡 Нажмите на рабочую смену — освободить день (цикл сдвинется). Ещё раз — вернуть.</p>
+<p class="hint" id="hint-text">💡 Выберите режим: освободить день или поменяться сменами</p>
 
 <script>
 const RU_MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -216,8 +278,41 @@ for(let m=0;m<12;m++){
 
 const holidays=new Set(['2026-05-09']);
 const freed=new Set();
+const swaps=new Map();
+
+let mode=null;
+let swapPending=null;
 
 function dk(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+
+const btnFreeMode=document.getElementById('btn-free-mode');
+const btnSwapMode=document.getElementById('btn-swap-mode');
+const swapBar=document.getElementById('swap-bar');
+const swapLabel=document.getElementById('swap-label');
+const swapDot=document.getElementById('swap-dot');
+const hintText=document.getElementById('hint-text');
+
+function setMode(m){
+  mode=m; swapPending=null;
+  btnFreeMode.className='btn-mode '+(m==='free'?'on-free':'off');
+  btnSwapMode.className='btn-mode '+(m==='swap'?'on-swap':'off');
+  if(m==='swap'){
+    swapBar.classList.remove('hidden','active');
+    swapLabel.textContent='Нажмите на первую рабочую смену';
+    hintText.textContent='🔄 Кликните на смену одного сотрудника, затем на смену другого — они поменяются';
+  } else if(m==='free'){
+    swapBar.classList.add('hidden');
+    hintText.textContent='✂️ Кликните на рабочую смену, чтобы освободить день';
+  } else {
+    swapBar.classList.add('hidden');
+    hintText.textContent='💡 Выберите режим: освободить день или поменяться сменами';
+  }
+  build();
+}
+
+btnFreeMode.onclick=()=>setMode(mode==='free'?null:'free');
+btnSwapMode.onclick=()=>setMode(mode==='swap'?null:'swap');
+document.getElementById('cancel-swap-btn').onclick=()=>{swapPending=null;build();swapBar.classList.remove('active');swapLabel.textContent='Нажмите на первую рабочую смену';};
 
 function computeSchedule(year,month){
   const dInMonth=new Date(year,month+1,0).getDate();
@@ -246,12 +341,15 @@ function computeSchedule(year,month){
     const key=dk(year,month,day);
     const hol=holidays.has(key);
     const fr=freed.has(key);
+    const isSwapped=swaps.has(key);
     let worker=null;
     if(!hol&&!fr){
-      worker=((((cursor%6)+6)%6)<3)?'S':'M';
+      let baseWorker=((((cursor%6)+6)%6)<3)?'S':'M';
+      if(isSwapped) worker=(baseWorker==='S')?'M':'S';
+      else worker=baseWorker;
       cursor++;
     }
-    result.push({day,isWE:dow===0||dow===6,hol,fr,worker,dow,key});
+    result.push({day,isWE:dow===0||dow===6,hol,fr,isSwapped,worker,dow,key});
   }
   return result;
 }
@@ -289,26 +387,51 @@ function build(){
   </tr>`;
 
   let ws=0,wm=0;
-  schedule.forEach(({day,isWE,hol,fr,worker,dow,key})=>{
+  schedule.forEach(({day,isWE,hol,fr,isSwapped,worker,dow,key})=>{
     const dowIdx=(dow+6)%7;
     const tr=document.createElement('tr');
     if(isWE) tr.classList.add('we');
 
     let s_td,m_td;
+
     if(hol){
       s_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
       m_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
     } else if(fr){
-      s_td=`<td class="clickable" data-key="${key}" data-action="unfree"><span class="pill pill-freed">Освобождён</span></td>`;
-      m_td=`<td class="clickable" data-key="${key}" data-action="unfree"><span class="pill pill-freed">Освобождён</span></td>`;
+      const action=mode==='free'?'data-action="unfree"':'';
+      const cls=mode==='free'?'clickable':'';
+      s_td=`<td class="${cls}" data-key="${key}" ${action}><span class="pill pill-freed">Освобождён</span></td>`;
+      m_td=`<td class="${cls}" data-key="${key}" ${action}><span class="pill pill-freed">Освобождён</span></td>`;
     } else if(worker==='S'){
       ws++;
-      s_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill pill-s">Работа</span></td>`;
-      m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      const swapCls=isSwapped?'pill-swapped':'pill-s';
+      const swapLabel2=isSwapped?'Обменяно':'Работа';
+      if(mode==='free'){
+        s_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      } else if(mode==='swap'){
+        const isPending=swapPending&&swapPending.key===key&&swapPending.col==='S';
+        s_td=`<td class="clickable swap-work${isPending?' swap-pending':''}" data-key="${key}" data-worker="S"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      } else {
+        s_td=`<td><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      }
     } else {
       wm++;
-      s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
-      m_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill pill-m">Работа</span></td>`;
+      const swapCls=isSwapped?'pill-swapped':'pill-m';
+      const swapLabel2=isSwapped?'Обменяно':'Работа';
+      if(mode==='free'){
+        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+      } else if(mode==='swap'){
+        const isPending=swapPending&&swapPending.key===key&&swapPending.col==='M';
+        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td=`<td class="clickable swap-work${isPending?' swap-pending':''}" data-key="${key}" data-worker="M"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+      } else {
+        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td=`<td><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+      }
     }
 
     tr.innerHTML=`
@@ -319,14 +442,64 @@ function build(){
     table.appendChild(tr);
   });
 
-  table.querySelectorAll('.clickable').forEach(cell=>{
-    cell.addEventListener('click',()=>{
-      const k=cell.dataset.key,a=cell.dataset.action;
-      if(a==='free') freed.add(k);
-      else if(a==='unfree') freed.delete(k);
-      build();
+  if(mode==='swap'&&swapPending){
+    table.querySelectorAll('.swap-work').forEach(cell=>{
+      if(cell.dataset.worker!==swapPending.worker){
+        cell.classList.add('swap-target');
+      }
     });
-  });
+  }
+
+  if(mode==='free'){
+    table.querySelectorAll('.clickable').forEach(cell=>{
+      cell.addEventListener('click',()=>{
+        const k=cell.dataset.key,a=cell.dataset.action;
+        if(a==='free') freed.add(k);
+        else if(a==='unfree') freed.delete(k);
+        build();
+      });
+    });
+  }
+
+  if(mode==='swap'){
+    table.querySelectorAll('.swap-work').forEach(cell=>{
+      cell.addEventListener('click',()=>{
+        const k=cell.dataset.key;
+        const w=cell.dataset.worker;
+        const dayNum=k.split('-')[2];
+
+        if(!swapPending){
+          swapPending={key:k,worker:w,day:dayNum};
+          swapBar.classList.add('active');
+          const name=w==='S'?(document.getElementById('name-s').value||'Сергей'):(document.getElementById('name-m').value||'Михаил');
+          swapLabel.innerHTML=`Выбрана смена <strong>${name}</strong> (${dayNum} число). Теперь выберите смену другого сотрудника.`;
+          build();
+        } else {
+          if(k===swapPending.key){
+            swapPending=null;
+            swapBar.classList.remove('active');
+            swapLabel.textContent='Нажмите на первую рабочую смену';
+            build();
+            return;
+          }
+          if(w===swapPending.worker){
+            swapPending={key:k,worker:w,day:dayNum};
+            const name=w==='S'?(document.getElementById('name-s').value||'Сергей'):(document.getElementById('name-m').value||'Михаил');
+            swapLabel.innerHTML=`Выбрана смена <strong>${name}</strong> (${dayNum} число). Теперь выберите смену другого сотрудника.`;
+            build();
+            return;
+          }
+          const k1=swapPending.key, k2=k;
+          if(swaps.has(k1)) swaps.delete(k1); else swaps.set(k1,k2);
+          if(swaps.has(k2)) swaps.delete(k2); else swaps.set(k2,k1);
+          swapPending=null;
+          swapBar.classList.remove('active');
+          swapLabel.textContent='Нажмите на первую рабочую смену';
+          build();
+        }
+      });
+    });
+  }
 
   document.getElementById('summary').innerHTML=`
     <div class="s-card"><div class="s-card-label">${ns} — смен</div><div class="s-card-val" style="color:var(--red)">${ws}</div></div>
