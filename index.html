@@ -7,198 +7,98 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red: #e74c3c;
-    --red-bg: #c0392b;
-    --green: #2ecc71;
-    --green-bg: #1e8449;
+    --red: #e74c3c; --red-bg: #c0392b;
+    --green: #2ecc71; --green-bg: #1e8449;
     --purple: #8e44ad;
-    --orange: #d35400;
-    --bg: #2c2c2c;
-    --surface: #383838;
-    --surface2: #424242;
-    --border: #555;
-    --text: #f0f0f0;
-    --muted: #aaa;
-    --header: #1a1a1a;
+    --bg: #2c2c2c; --surface: #383838;
+    --border: #555; --text: #f0f0f0;
+    --muted: #aaa; --header: #1a1a1a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 40px;
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; }
+
+  .loading-overlay {
+    position: fixed; inset: 0; background: #1a1a1a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 999; gap: 16px;
   }
-  header {
-    background: var(--header);
-    padding: 18px 18px 14px;
-    border-bottom: 2px solid #111;
-    position: sticky; top: 0; z-index: 100;
+  .loading-overlay.hidden { display: none; }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid #444;
+    border-top-color: #2ecc71; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
-  header h1 {
-    font-family: 'Unbounded', sans-serif;
-    font-size: 15px; font-weight: 700;
-    color: #fff; margin-bottom: 12px;
-    letter-spacing: -0.3px;
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Unbounded', sans-serif; font-size: 12px; color: #666; }
+
+  header { background: var(--header); padding: 18px 18px 14px; border-bottom: 2px solid #111; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; letter-spacing: -0.3px; }
   .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .controls label { font-size: 11px; color: #888; }
-  select, input[type=text], input[type=number] {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    border: 1px solid #444;
-    border-radius: 6px;
-    padding: 5px 9px;
-    background: #2a2a2a;
-    color: #fff;
-    outline: none;
-  }
+  select, input[type=text], input[type=number] { font-family: 'Inter', sans-serif; font-size: 13px; border: 1px solid #444; border-radius: 6px; padding: 5px 9px; background: #2a2a2a; color: #fff; outline: none; }
   select:focus, input:focus { border-color: #777; }
 
-  .swap-bar {
-    margin: 10px 16px 0;
-    background: #1e3a2f;
-    border: 1px solid #2e6b4e;
-    border-radius: 10px;
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    transition: all 0.2s;
-  }
+  .sync-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #555; margin-left: 8px; vertical-align: middle; transition: background 0.3s; }
+  .sync-dot.ok { background: #2ecc71; }
+  .sync-dot.saving { background: #e67e22; animation: pulse 0.6s infinite alternate; }
+  .sync-dot.err { background: #e74c3c; }
+  @keyframes pulse { to { opacity: 0.4; } }
+
+  .swap-bar { margin: 10px 16px 0; background: #1e3a2f; border: 1px solid #2e6b4e; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .swap-bar.hidden { display: none; }
-  .swap-bar.active {
-    background: #3a2a1a;
-    border-color: #c0762e;
-  }
-  .swap-status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #2ecc71; flex-shrink: 0;
-  }
+  .swap-bar.active { background: #3a2a1a; border-color: #c0762e; }
+  .swap-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; flex-shrink: 0; }
   .swap-bar.active .swap-status-dot { background: #e67e22; }
   .swap-label { font-size: 12px; color: #aaa; flex: 1; }
   .swap-label strong { color: #fff; }
-  .btn-cancel-swap {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px; font-weight: 600;
-    border: 1px solid #666;
-    border-radius: 6px; padding: 4px 10px;
-    background: #4a3030; color: #e88; cursor: pointer;
-  }
-  .btn-cancel-swap:hover { background: #5a3030; }
+  .btn-cancel-swap { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; border: 1px solid #666; border-radius: 6px; padding: 4px 10px; background: #4a3030; color: #e88; cursor: pointer; }
 
-  .hol-section {
-    margin: 10px 16px 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
+  .hol-section { margin: 10px 16px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .hol-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
   .hol-chips { display: flex; gap: 5px; flex-wrap: wrap; flex: 1; }
-  .hol-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--purple); color: #fff;
-    border-radius: 5px; padding: 3px 8px; font-size: 11px; font-weight: 500;
-  }
+  .hol-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--purple); color: #fff; border-radius: 5px; padding: 3px 8px; font-size: 11px; font-weight: 500; }
   .hol-chip button { background: none; border: none; color: #ddd; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
   .hol-add { display: flex; gap: 6px; align-items: center; }
-  .btn-add {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px; font-weight: 600;
-    border: 1px solid #666;
-    border-radius: 6px; padding: 5px 12px;
-    background: #4a4a4a; color: #fff;
-    cursor: pointer; white-space: nowrap;
-  }
+  .btn-add { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; border: 1px solid #666; border-radius: 6px; padding: 5px 12px; background: #4a4a4a; color: #fff; cursor: pointer; white-space: nowrap; }
   .btn-add:hover { background: #555; }
-  .btn-add:active { transform: scale(0.97); }
 
-  .mode-bar {
-    margin: 10px 16px 0;
-    display: flex; gap: 8px;
-  }
-  .btn-mode {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px; font-weight: 600;
-    border: 1px solid #555;
-    border-radius: 8px; padding: 6px 14px;
-    cursor: pointer; transition: all 0.15s;
-  }
+  .mode-bar { margin: 10px 16px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn-mode { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; border: 1px solid #555; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
   .btn-mode.off { background: #333; color: #888; }
   .btn-mode.off:hover { background: #3a3a3a; color: #bbb; }
   .btn-mode.on-free { background: #1e3a2f; color: #2ecc71; border-color: #2e6b4e; }
   .btn-mode.on-swap { background: #2a1e3a; color: #9b59b6; border-color: #6b3a8a; }
+  .btn-reset { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; border: 1px solid #555; border-radius: 8px; padding: 6px 14px; cursor: pointer; background: #3a2020; color: #c0392b; margin-left: auto; }
+  .btn-reset:hover { background: #4a2020; }
 
-  .table-wrap {
-    margin: 10px 16px 0;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #111;
-  }
+  .table-wrap { margin: 10px 16px 0; border-radius: 12px; overflow: hidden; border: 1px solid #111; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-  th {
-    background: #111;
-    color: #999;
-    font-family: 'Unbounded', sans-serif;
-    font-size: 9px; font-weight: 400;
-    letter-spacing: 0.5px;
-    padding: 10px 4px; text-align: center;
-    border-bottom: 2px solid #000;
-  }
-  td {
-    padding: 5px 3px; text-align: center;
-    border-bottom: 1px solid #333;
-    background: var(--surface);
-    vertical-align: middle;
-  }
+  th { background: #111; color: #999; font-family: 'Unbounded', sans-serif; font-size: 9px; font-weight: 400; letter-spacing: 0.5px; padding: 10px 4px; text-align: center; border-bottom: 2px solid #000; }
+  td { padding: 5px 3px; text-align: center; border-bottom: 1px solid #333; background: var(--surface); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr.we td { background: #313131; }
-
   .d-num { font-weight: 600; font-size: 13px; color: #ddd; }
   .d-name { font-size: 11px; color: #777; }
   tr.we .d-num { color: #666; }
   tr.we .d-name { color: #555; }
 
-  .pill {
-    display: inline-block;
-    border-radius: 6px;
-    padding: 5px 0;
-    width: 94%;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .pill-s   { background: var(--red-bg);   color: #fff; }
-  .pill-m   { background: var(--green-bg); color: #fff; }
-  .pill-off { background: #333; color: #666; font-weight: 400; font-size: 11px; border: 1px solid #444; }
-  .pill-hol { background: var(--purple);   color: #fff; font-size: 11px; }
-  .pill-freed { background: #2e2e2e; color: #666; font-size: 11px; font-style: italic; border: 1px dashed #555; }
-  .pill-swapped { background: #4a3000; color: #e67e22; font-size: 11px; border: 1px dashed #c0762e; }
+  .pill { display: inline-block; border-radius: 6px; padding: 5px 0; width: 94%; font-size: 12px; font-weight: 600; }
+  .pill-s      { background: var(--red-bg); color: #fff; }
+  .pill-m      { background: var(--green-bg); color: #fff; }
+  .pill-off    { background: #333; color: #666; font-weight: 400; font-size: 11px; border: 1px solid #444; }
+  .pill-hol    { background: var(--purple); color: #fff; font-size: 11px; }
+  .pill-freed  { background: #2e2e2e; color: #666; font-size: 11px; font-style: italic; border: 1px dashed #555; }
+  .pill-swapped{ background: #4a3000; color: #e67e22; font-size: 11px; border: 1px dashed #c0762e; }
 
   .clickable { cursor: pointer; transition: opacity .12s; }
   .clickable:hover .pill { opacity: 0.78; }
   .swap-pending { outline: 2px solid #e67e22 !important; outline-offset: -2px; border-radius: 6px; }
-  .swap-target .pill { opacity: 0.75; }
-  .swap-target:hover .pill { opacity: 1; outline: 2px dashed #e67e22; outline-offset: -2px; border-radius: 6px; }
+  .swap-target:hover .pill { outline: 2px dashed #e67e22; outline-offset: -2px; border-radius: 6px; }
 
-  .summary {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin: 12px 16px 0;
-  }
-  .s-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
+  .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 12px 16px 0; }
+  .s-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
   .s-card-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
-  .s-card-val {
-    font-size: 28px;
-    font-family: 'Unbounded', sans-serif;
-    font-weight: 700;
-    line-height: 1.1;
-  }
+  .s-card-val { font-size: 28px; font-family: 'Unbounded', sans-serif; font-weight: 700; line-height: 1.1; }
 
   .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 16px 0; }
   .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #888; }
@@ -215,8 +115,17 @@
 </head>
 <body>
 
+<!-- Загрузочный экран -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Загружаем данные...</div>
+</div>
+
 <header>
-  <h1>📅 ГРАФИК СМЕН — 3 через 3</h1>
+  <h1>
+    📅 ГРАФИК СМЕН — 3 через 3
+    <span class="sync-dot" id="sync-dot" title="Синхронизация"></span>
+  </h1>
   <div class="controls">
     <label>Месяц</label>
     <select id="month-sel"></select>
@@ -230,10 +139,11 @@
 <div class="mode-bar">
   <button class="btn-mode off" id="btn-free-mode">✂️ Освободить день</button>
   <button class="btn-mode off" id="btn-swap-mode">🔄 Поменяться сменами</button>
+  <button class="btn-reset" id="btn-reset">🗑 Сбросить всё</button>
 </div>
 
 <div class="swap-bar hidden" id="swap-bar">
-  <div class="swap-status-dot" id="swap-dot"></div>
+  <div class="swap-status-dot"></div>
   <span class="swap-label" id="swap-label">Выберите смену для обмена</span>
   <button class="btn-cancel-swap" id="cancel-swap-btn">Отмена</button>
 </div>
@@ -247,10 +157,7 @@
   </div>
 </div>
 
-<div class="table-wrap">
-  <table id="sched"></table>
-</div>
-
+<div class="table-wrap"><table id="sched"></table></div>
 <div class="summary" id="summary"></div>
 
 <div class="legend">
@@ -262,123 +169,224 @@
 </div>
 <p class="hint" id="hint-text">💡 Выберите режим: освободить день или поменяться сменами</p>
 
-<script>
-const RU_MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const RU_SD=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-const ANCHOR=new Date(2026,3,1);
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const monthSel=document.getElementById('month-sel');
-const curMonth=new Date().getMonth();
-for(let m=0;m<12;m++){
-  const o=document.createElement('option');
-  o.value=m; o.text=RU_MONTHS[m]+' 2026';
-  if(m===curMonth) o.selected=true;
+const firebaseConfig = {
+  apiKey: "AIzaSyDpbsjnDVV9lAOoRzQPa1pM_BMAVib6Ggg",
+  authDomain: "dobro-petrol-shedule.firebaseapp.com",
+  projectId: "dobro-petrol-shedule",
+  storageBucket: "dobro-petrol-shedule.firebasestorage.app",
+  messagingSenderId: "729598188849",
+  appId: "1:729598188849:web:558b185c9be6fa7e71a410"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const REF = doc(db, "schedule", "main");
+
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const RU_SD     = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const ANCHOR    = new Date(2026,3,1);
+
+// ── Состояние ──────────────────────────────────────────────────────────────
+let holidays = new Set(['2026-05-09']);
+let freed    = new Set();
+let swaps    = new Map();
+let nameS    = 'Сергей';
+let nameM    = 'Михаил';
+let selMonth = new Date().getMonth();
+
+let mode        = null;
+let swapPending = null;
+let isSyncing   = false; // флаг чтобы не зациклить onSnapshot → setDoc → onSnapshot
+
+// ── UI элементы ────────────────────────────────────────────────────────────
+const syncDot    = document.getElementById('sync-dot');
+const loadingEl  = document.getElementById('loading');
+const monthSel   = document.getElementById('month-sel');
+const btnFree    = document.getElementById('btn-free-mode');
+const btnSwap    = document.getElementById('btn-swap-mode');
+const swapBar    = document.getElementById('swap-bar');
+const swapLabel  = document.getElementById('swap-label');
+const hintText   = document.getElementById('hint-text');
+
+// Месяца
+for (let m = 0; m < 12; m++) {
+  const o = document.createElement('option');
+  o.value = m; o.text = RU_MONTHS[m] + ' 2026';
+  if (m === selMonth) o.selected = true;
   monthSel.appendChild(o);
 }
 
-const holidays=new Set(['2026-05-09']);
-const freed=new Set();
-const swaps=new Map();
+// ── Sync dot ───────────────────────────────────────────────────────────────
+function setSyncDot(state) {
+  syncDot.className = 'sync-dot ' + state;
+}
 
-let mode=null;
-let swapPending=null;
+// ── Firebase: сохранить ────────────────────────────────────────────────────
+async function saveToFirebase() {
+  setSyncDot('saving');
+  try {
+    isSyncing = true;
+    await setDoc(REF, {
+      holidays: [...holidays],
+      freed:    [...freed],
+      swaps:    [...swaps.entries()].map(([k,v]) => k + '|' + v),
+      nameS, nameM, selMonth
+    });
+    setSyncDot('ok');
+  } catch(e) {
+    console.error(e);
+    setSyncDot('err');
+  } finally {
+    setTimeout(() => { isSyncing = false; }, 300);
+  }
+}
 
-function dk(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+// ── Firebase: загрузить и слушать изменения ────────────────────────────────
+function applyData(data) {
+  if (!data) return;
+  holidays = new Set(data.holidays || ['2026-05-09']);
+  freed    = new Set(data.freed    || []);
+  swaps    = new Map((data.swaps || []).map(s => { const [k,v]=s.split('|'); return [k,v]; }));
+  nameS    = data.nameS    || 'Сергей';
+  nameM    = data.nameM    || 'Михаил';
+  selMonth = data.selMonth ?? new Date().getMonth();
 
-const btnFreeMode=document.getElementById('btn-free-mode');
-const btnSwapMode=document.getElementById('btn-swap-mode');
-const swapBar=document.getElementById('swap-bar');
-const swapLabel=document.getElementById('swap-label');
-const swapDot=document.getElementById('swap-dot');
-const hintText=document.getElementById('hint-text');
+  document.getElementById('name-s').value = nameS;
+  document.getElementById('name-m').value = nameM;
+  monthSel.value = selMonth;
+  build();
+}
 
-function setMode(m){
-  mode=m; swapPending=null;
-  btnFreeMode.className='btn-mode '+(m==='free'?'on-free':'off');
-  btnSwapMode.className='btn-mode '+(m==='swap'?'on-swap':'off');
-  if(m==='swap'){
+// Первая загрузка
+getDoc(REF).then(snap => {
+  if (snap.exists()) applyData(snap.data());
+  loadingEl.classList.add('hidden');
+  setSyncDot('ok');
+}).catch(e => {
+  console.error(e);
+  loadingEl.classList.add('hidden');
+  setSyncDot('err');
+});
+
+// Realtime — когда другой пользователь меняет данные
+onSnapshot(REF, snap => {
+  if (isSyncing) return; // это наш собственный setDoc — пропускаем
+  if (snap.exists()) {
+    applyData(snap.data());
+    setSyncDot('ok');
+  }
+});
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function dk(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` }
+
+function setMode(m) {
+  mode = m; swapPending = null;
+  btnFree.className = 'btn-mode ' + (m==='free' ? 'on-free' : 'off');
+  btnSwap.className = 'btn-mode ' + (m==='swap' ? 'on-swap' : 'off');
+  if (m==='swap') {
     swapBar.classList.remove('hidden','active');
-    swapLabel.textContent='Нажмите на первую рабочую смену';
-    hintText.textContent='🔄 Кликните на смену одного сотрудника, затем на смену другого — они поменяются';
-  } else if(m==='free'){
+    swapLabel.textContent = 'Нажмите на первую рабочую смену';
+    hintText.textContent  = '🔄 Кликните на смену одного сотрудника, затем другого — они поменяются';
+  } else if (m==='free') {
     swapBar.classList.add('hidden');
-    hintText.textContent='✂️ Кликните на рабочую смену, чтобы освободить день';
+    hintText.textContent = '✂️ Кликните на рабочую смену, чтобы освободить день';
   } else {
     swapBar.classList.add('hidden');
-    hintText.textContent='💡 Выберите режим: освободить день или поменяться сменами';
+    hintText.textContent = '💡 Выберите режим: освободить день или поменяться сменами';
   }
   build();
 }
 
-btnFreeMode.onclick=()=>setMode(mode==='free'?null:'free');
-btnSwapMode.onclick=()=>setMode(mode==='swap'?null:'swap');
-document.getElementById('cancel-swap-btn').onclick=()=>{swapPending=null;build();swapBar.classList.remove('active');swapLabel.textContent='Нажмите на первую рабочую смену';};
+btnFree.onclick = () => setMode(mode==='free' ? null : 'free');
+btnSwap.onclick = () => setMode(mode==='swap' ? null : 'swap');
 
-function computeSchedule(year,month){
-  const dInMonth=new Date(year,month+1,0).getDate();
-  const startDate=new Date(year,month,1);
-  let pc=0;
-  if(startDate>=ANCHOR){
-    let d=new Date(ANCHOR);
-    while(d<startDate){
-      if(!holidays.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))&&
-         !freed.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))) pc++;
+document.getElementById('cancel-swap-btn').onclick = () => {
+  swapPending = null;
+  swapBar.classList.remove('active');
+  swapLabel.textContent = 'Нажмите на первую рабочую смену';
+  build();
+};
+
+document.getElementById('btn-reset').onclick = () => {
+  if (!confirm('Сбросить все изменения? Это увидят все пользователи.')) return;
+  holidays.clear(); holidays.add('2026-05-09');
+  freed.clear(); swaps.clear(); swapPending = null;
+  saveToFirebase(); build();
+};
+
+// ── Расчёт расписания ──────────────────────────────────────────────────────
+function computeSchedule(year, month) {
+  const dInMonth  = new Date(year, month+1, 0).getDate();
+  const startDate = new Date(year, month, 1);
+  let pc = 0;
+  if (startDate >= ANCHOR) {
+    let d = new Date(ANCHOR);
+    while (d < startDate) {
+      const k = dk(d.getFullYear(), d.getMonth(), d.getDate());
+      if (!holidays.has(k) && !freed.has(k)) pc++;
       d.setDate(d.getDate()+1);
     }
   } else {
-    let d=new Date(startDate);
-    while(d<ANCHOR){
-      if(!holidays.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))&&
-         !freed.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))) pc--;
+    let d = new Date(startDate);
+    while (d < ANCHOR) {
+      const k = dk(d.getFullYear(), d.getMonth(), d.getDate());
+      if (!holidays.has(k) && !freed.has(k)) pc--;
       d.setDate(d.getDate()+1);
     }
   }
-  const result=[];
-  let cursor=pc;
-  for(let day=1;day<=dInMonth;day++){
-    const date=new Date(year,month,day);
-    const dow=date.getDay();
-    const key=dk(year,month,day);
-    const hol=holidays.has(key);
-    const fr=freed.has(key);
-    const isSwapped=swaps.has(key);
-    let worker=null;
-    if(!hol&&!fr){
-      let baseWorker=((((cursor%6)+6)%6)<3)?'S':'M';
-      if(isSwapped) worker=(baseWorker==='S')?'M':'S';
-      else worker=baseWorker;
+  const result = [];
+  let cursor = pc;
+  for (let day = 1; day <= dInMonth; day++) {
+    const date      = new Date(year, month, day);
+    const dow       = date.getDay();
+    const key       = dk(year, month, day);
+    const hol       = holidays.has(key);
+    const fr        = freed.has(key);
+    const isSwapped = swaps.has(key);
+    let worker = null;
+    if (!hol && !fr) {
+      const base = ((((cursor%6)+6)%6) < 3) ? 'S' : 'M';
+      worker = isSwapped ? (base==='S' ? 'M' : 'S') : base;
       cursor++;
     }
-    result.push({day,isWE:dow===0||dow===6,hol,fr,isSwapped,worker,dow,key});
+    result.push({day, isWE: dow===0||dow===6, hol, fr, isSwapped, worker, dow, key});
   }
   return result;
 }
 
-function renderChips(m){
-  const chips=document.getElementById('hol-chips');
-  chips.innerHTML='';
-  [...holidays].filter(k=>parseInt(k.split('-')[1])-1===m).sort().forEach(k=>{
-    const day=parseInt(k.split('-')[2]);
-    const c=document.createElement('span');
-    c.className='hol-chip';
-    c.innerHTML=`${day} ${RU_MONTHS[m].slice(0,3).toLowerCase()} <button>×</button>`;
-    c.querySelector('button').onclick=()=>{holidays.delete(k);build();};
+// ── Чипы праздников ────────────────────────────────────────────────────────
+function renderChips(m) {
+  const chips = document.getElementById('hol-chips');
+  chips.innerHTML = '';
+  [...holidays].filter(k => parseInt(k.split('-')[1])-1 === m).sort().forEach(k => {
+    const day = parseInt(k.split('-')[2]);
+    const c   = document.createElement('span');
+    c.className = 'hol-chip';
+    c.innerHTML = `${day} ${RU_MONTHS[m].slice(0,3).toLowerCase()} <button>×</button>`;
+    c.querySelector('button').onclick = () => { holidays.delete(k); saveToFirebase(); build(); };
     chips.appendChild(c);
   });
 }
 
-function build(){
-  const m=parseInt(monthSel.value);
-  const y=2026;
-  const ns=document.getElementById('name-s').value||'Сергей';
-  const nm=document.getElementById('name-m').value||'Михаил';
-  document.getElementById('leg-s').textContent=ns;
-  document.getElementById('leg-m').textContent=nm;
+// ── Рендер таблицы ─────────────────────────────────────────────────────────
+function build() {
+  const m  = parseInt(monthSel.value);
+  const y  = 2026;
+  const ns = document.getElementById('name-s').value || 'Сергей';
+  const nm = document.getElementById('name-m').value || 'Михаил';
+  document.getElementById('leg-s').textContent = ns;
+  document.getElementById('leg-m').textContent = nm;
   renderChips(m);
 
-  const schedule=computeSchedule(y,m);
-  const table=document.getElementById('sched');
-  table.innerHTML=`<tr>
+  const schedule = computeSchedule(y, m);
+  const table    = document.getElementById('sched');
+  table.innerHTML = `<tr>
     <th style="width:28px">#</th>
     <th style="width:32px">ДЕНЬ</th>
     <th style="width:40px">ДАТА</th>
@@ -386,55 +394,54 @@ function build(){
     <th>${nm.toUpperCase()}</th>
   </tr>`;
 
-  let ws=0,wm=0;
-  schedule.forEach(({day,isWE,hol,fr,isSwapped,worker,dow,key})=>{
-    const dowIdx=(dow+6)%7;
-    const tr=document.createElement('tr');
-    if(isWE) tr.classList.add('we');
+  let ws=0, wm=0;
+  schedule.forEach(({day,isWE,hol,fr,isSwapped,worker,dow,key}) => {
+    const dowIdx = (dow+6)%7;
+    const tr = document.createElement('tr');
+    if (isWE) tr.classList.add('we');
 
-    let s_td,m_td;
+    let s_td, m_td;
+    const isPendingKey = swapPending && swapPending.key === key;
 
-    if(hol){
-      s_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
-      m_td=`<td><span class="pill pill-hol">Праздник</span></td>`;
-    } else if(fr){
-      const action=mode==='free'?'data-action="unfree"':'';
-      const cls=mode==='free'?'clickable':'';
-      s_td=`<td class="${cls}" data-key="${key}" ${action}><span class="pill pill-freed">Освобождён</span></td>`;
-      m_td=`<td class="${cls}" data-key="${key}" ${action}><span class="pill pill-freed">Освобождён</span></td>`;
-    } else if(worker==='S'){
+    if (hol) {
+      s_td = `<td><span class="pill pill-hol">Праздник</span></td>`;
+      m_td = `<td><span class="pill pill-hol">Праздник</span></td>`;
+    } else if (fr) {
+      const cls = mode==='free' ? 'clickable' : '';
+      const act = mode==='free' ? `data-action="unfree"` : '';
+      s_td = `<td class="${cls}" data-key="${key}" ${act}><span class="pill pill-freed">Освобождён</span></td>`;
+      m_td = `<td class="${cls}" data-key="${key}" ${act}><span class="pill pill-freed">Освобождён</span></td>`;
+    } else if (worker === 'S') {
       ws++;
-      const swapCls=isSwapped?'pill-swapped':'pill-s';
-      const swapLabel2=isSwapped?'Обменяно':'Работа';
-      if(mode==='free'){
-        s_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
-        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
-      } else if(mode==='swap'){
-        const isPending=swapPending&&swapPending.key===key&&swapPending.col==='S';
-        s_td=`<td class="clickable swap-work${isPending?' swap-pending':''}" data-key="${key}" data-worker="S"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
-        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+      const pc2 = isSwapped ? 'pill-swapped' : 'pill-s';
+      const lbl = isSwapped ? 'Обменяно' : 'Работа';
+      if (mode==='free') {
+        s_td = `<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${pc2}">${lbl}</span></td>`;
+        m_td = `<td><span class="pill pill-off">Выходной</span></td>`;
+      } else if (mode==='swap') {
+        s_td = `<td class="clickable swap-work${isPendingKey?' swap-pending':''}" data-key="${key}" data-worker="S"><span class="pill ${pc2}">${lbl}</span></td>`;
+        m_td = `<td><span class="pill pill-off">Выходной</span></td>`;
       } else {
-        s_td=`<td><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
-        m_td=`<td><span class="pill pill-off">Выходной</span></td>`;
+        s_td = `<td><span class="pill ${pc2}">${lbl}</span></td>`;
+        m_td = `<td><span class="pill pill-off">Выходной</span></td>`;
       }
     } else {
       wm++;
-      const swapCls=isSwapped?'pill-swapped':'pill-m';
-      const swapLabel2=isSwapped?'Обменяно':'Работа';
-      if(mode==='free'){
-        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
-        m_td=`<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
-      } else if(mode==='swap'){
-        const isPending=swapPending&&swapPending.key===key&&swapPending.col==='M';
-        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
-        m_td=`<td class="clickable swap-work${isPending?' swap-pending':''}" data-key="${key}" data-worker="M"><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+      const pc2 = isSwapped ? 'pill-swapped' : 'pill-m';
+      const lbl = isSwapped ? 'Обменяно' : 'Работа';
+      if (mode==='free') {
+        s_td = `<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td = `<td class="clickable" data-key="${key}" data-action="free"><span class="pill ${pc2}">${lbl}</span></td>`;
+      } else if (mode==='swap') {
+        s_td = `<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td = `<td class="clickable swap-work${isPendingKey?' swap-pending':''}" data-key="${key}" data-worker="M"><span class="pill ${pc2}">${lbl}</span></td>`;
       } else {
-        s_td=`<td><span class="pill pill-off">Выходной</span></td>`;
-        m_td=`<td><span class="pill ${swapCls}">${swapLabel2}</span></td>`;
+        s_td = `<td><span class="pill pill-off">Выходной</span></td>`;
+        m_td = `<td><span class="pill ${pc2}">${lbl}</span></td>`;
       }
     }
 
-    tr.innerHTML=`
+    tr.innerHTML = `
       <td class="d-num">${day}</td>
       <td class="d-name">${RU_SD[dowIdx]}</td>
       <td class="d-num">${String(day).padStart(2,'0')}.${String(m+1).padStart(2,'0')}</td>
@@ -442,86 +449,95 @@ function build(){
     table.appendChild(tr);
   });
 
-  if(mode==='swap'&&swapPending){
-    table.querySelectorAll('.swap-work').forEach(cell=>{
-      if(cell.dataset.worker!==swapPending.worker){
-        cell.classList.add('swap-target');
-      }
+  // Подсветить цели обмена
+  if (mode==='swap' && swapPending) {
+    table.querySelectorAll('.swap-work').forEach(cell => {
+      if (cell.dataset.worker !== swapPending.worker) cell.classList.add('swap-target');
     });
   }
 
-  if(mode==='free'){
-    table.querySelectorAll('.clickable').forEach(cell=>{
-      cell.addEventListener('click',()=>{
-        const k=cell.dataset.key,a=cell.dataset.action;
-        if(a==='free') freed.add(k);
-        else if(a==='unfree') freed.delete(k);
-        build();
+  // Освобождение
+  if (mode==='free') {
+    table.querySelectorAll('.clickable').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const k=cell.dataset.key, a=cell.dataset.action;
+        if (a==='free') freed.add(k); else freed.delete(k);
+        saveToFirebase(); build();
       });
     });
   }
 
-  if(mode==='swap'){
-    table.querySelectorAll('.swap-work').forEach(cell=>{
-      cell.addEventListener('click',()=>{
-        const k=cell.dataset.key;
-        const w=cell.dataset.worker;
-        const dayNum=k.split('-')[2];
-
-        if(!swapPending){
-          swapPending={key:k,worker:w,day:dayNum};
+  // Обмен сменами
+  if (mode==='swap') {
+    table.querySelectorAll('.swap-work').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const k   = cell.dataset.key;
+        const w   = cell.dataset.worker;
+        const day = k.split('-')[2];
+        const name = w==='S' ? (document.getElementById('name-s').value||'Сергей')
+                              : (document.getElementById('name-m').value||'Михаил');
+        if (!swapPending) {
+          swapPending = {key:k, worker:w};
           swapBar.classList.add('active');
-          const name=w==='S'?(document.getElementById('name-s').value||'Сергей'):(document.getElementById('name-m').value||'Михаил');
-          swapLabel.innerHTML=`Выбрана смена <strong>${name}</strong> (${dayNum} число). Теперь выберите смену другого сотрудника.`;
+          swapLabel.innerHTML = `Выбрана смена <strong>${name}</strong> (${day} число). Теперь выберите смену другого.`;
+          build();
+        } else if (k === swapPending.key) {
+          swapPending = null;
+          swapBar.classList.remove('active');
+          swapLabel.textContent = 'Нажмите на первую рабочую смену';
+          build();
+        } else if (w === swapPending.worker) {
+          swapPending = {key:k, worker:w};
+          swapLabel.innerHTML = `Выбрана смена <strong>${name}</strong> (${day} число). Теперь выберите смену другого.`;
           build();
         } else {
-          if(k===swapPending.key){
-            swapPending=null;
-            swapBar.classList.remove('active');
-            swapLabel.textContent='Нажмите на первую рабочую смену';
-            build();
-            return;
-          }
-          if(w===swapPending.worker){
-            swapPending={key:k,worker:w,day:dayNum};
-            const name=w==='S'?(document.getElementById('name-s').value||'Сергей'):(document.getElementById('name-m').value||'Михаил');
-            swapLabel.innerHTML=`Выбрана смена <strong>${name}</strong> (${dayNum} число). Теперь выберите смену другого сотрудника.`;
-            build();
-            return;
-          }
           const k1=swapPending.key, k2=k;
-          if(swaps.has(k1)) swaps.delete(k1); else swaps.set(k1,k2);
-          if(swaps.has(k2)) swaps.delete(k2); else swaps.set(k2,k1);
-          swapPending=null;
+          if (swaps.has(k1)) swaps.delete(k1); else swaps.set(k1,k2);
+          if (swaps.has(k2)) swaps.delete(k2); else swaps.set(k2,k1);
+          swapPending = null;
           swapBar.classList.remove('active');
-          swapLabel.textContent='Нажмите на первую рабочую смену';
-          build();
+          swapLabel.textContent = 'Нажмите на первую рабочую смену';
+          saveToFirebase(); build();
         }
       });
     });
   }
 
-  document.getElementById('summary').innerHTML=`
+  document.getElementById('summary').innerHTML = `
     <div class="s-card"><div class="s-card-label">${ns} — смен</div><div class="s-card-val" style="color:var(--red)">${ws}</div></div>
     <div class="s-card"><div class="s-card-label">${nm} — смен</div><div class="s-card-val" style="color:var(--green)">${wm}</div></div>
     <div class="s-card"><div class="s-card-label">Дней в месяце</div><div class="s-card-val" style="color:#aaa">${schedule.length}</div></div>
   `;
 }
 
-document.getElementById('add-hol-btn').addEventListener('click',()=>{
-  const m=parseInt(monthSel.value);
-  const v=parseInt(document.getElementById('hol-day').value);
-  const dim=new Date(2026,m+1,0).getDate();
-  const inp=document.getElementById('hol-day');
-  if(!v||v<1||v>dim){inp.style.borderColor='#e74c3c';setTimeout(()=>inp.style.borderColor='',1200);return;}
-  holidays.add(dk(2026,m,v));
-  inp.value='';
-  build();
+// ── Контролы ───────────────────────────────────────────────────────────────
+document.getElementById('add-hol-btn').addEventListener('click', () => {
+  const m   = parseInt(monthSel.value);
+  const v   = parseInt(document.getElementById('hol-day').value);
+  const dim = new Date(2026, m+1, 0).getDate();
+  const inp = document.getElementById('hol-day');
+  if (!v || v<1 || v>dim) { inp.style.borderColor='#e74c3c'; setTimeout(()=>inp.style.borderColor='',1200); return; }
+  holidays.add(dk(2026, m, v));
+  inp.value = '';
+  saveToFirebase(); build();
 });
 
-monthSel.addEventListener('change',build);
-document.getElementById('name-s').addEventListener('input',build);
-document.getElementById('name-m').addEventListener('input',build);
+let nameTimer;
+function onNameChange() {
+  nameS = document.getElementById('name-s').value || 'Сергей';
+  nameM = document.getElementById('name-m').value || 'Михаил';
+  build();
+  clearTimeout(nameTimer);
+  nameTimer = setTimeout(saveToFirebase, 800); // сохраняем с дебаунсом
+}
+
+monthSel.addEventListener('change', () => {
+  selMonth = parseInt(monthSel.value);
+  saveToFirebase(); build();
+});
+document.getElementById('name-s').addEventListener('input', onNameChange);
+document.getElementById('name-m').addEventListener('input', onNameChange);
+
 build();
 </script>
 </body>
